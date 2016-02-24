@@ -21,6 +21,9 @@ public class Personaje
     private Animation animacion;    // Caminando
     private float timerAnimacion;
 
+    // Estados del personaje
+    private Estado estado;
+
     /*
     Constructor del personaje, recibe una imagen con varios frames, (ver imagen marioSprite.png)
      */
@@ -38,6 +41,7 @@ public class Personaje
         timerAnimacion = 0;
         // Crea el sprite cuando para el personaje quieto (idle)
         sprite = new Sprite(texturaPersonaje[0][0]);    // quieto
+        estado = Estado.INICIANDO;
     }
 
     // Dibuja el personaje
@@ -46,13 +50,26 @@ public class Personaje
         timerAnimacion += Gdx.graphics.getDeltaTime();
         // Obtiene el frame que se debe mostrar (de acuerdo al timer)
         TextureRegion region = animacion.getKeyFrame(timerAnimacion);
-        // Dibuja el frame en las coordenadas del sprite
-        batch.draw(region,sprite.getX(), sprite.getY());
+        // Dibuaj el personaje dependiendo del estado
+        switch (estado) {
+            case INICIANDO:
+                // Dibuja el frame en las coordenadas del sprite
+                batch.draw(region, sprite.getX(), sprite.getY());
+                break;
+            case QUIETO:
+                sprite.draw(batch); // Dibuja el sprite
+                break;
+        }
+
     }
 
-    // Avanza el sprite de acuerdo a la velocidad en Y
+    // Actualiza el sprite, de acuerdo al estado
     public void caer() {
-        sprite.setY(sprite.getY() + VELOCIDAD_Y);
+        switch (estado) {
+            case INICIANDO: // Caída inicial
+                sprite.setY(sprite.getY() + VELOCIDAD_Y);
+                break;
+        }
     }
 
     // Accesor de la variable sprite
@@ -71,5 +88,24 @@ public class Personaje
 
     public void setPosicion(float x, int y) {
         sprite.setPosition(x,y);
+    }
+
+    // Accesor del estado
+    public Estado getEstado() {
+        return estado;
+    }
+
+    // Modificador del estado
+    public void setEstado(Estado estado) {
+        this.estado = estado;
+    }
+
+    public enum Estado {
+        INICIANDO,
+        QUIETO,
+        MOV_IZQUIERDA,
+        MOV_DERECHA,
+        SALTANDO,
+        CAYENDO
     }
 }

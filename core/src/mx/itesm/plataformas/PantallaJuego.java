@@ -109,22 +109,28 @@ public class PantallaJuego implements Screen
     Mueve el personaje en Y hasta que se encuentre sobre un bloque
      */
     private void moverPersonaje() {
-        // Los bloques en el mapa son de 16x16
-        // Calcula la celda donde estaría después de moverlo
-        int celdaX = (int)(mario.getX()/ TAM_CELDA);
-        int celdaY = (int)((mario.getY()+mario.VELOCIDAD_Y)/ TAM_CELDA);
-        // Recuperamos la celda en esta posición
-        // La capa 0 es el fondo
-        TiledMapTileLayer capa = (TiledMapTileLayer)mapa.getLayers().get(1);
-        TiledMapTileLayer.Cell celda = capa.getCell(celdaX, celdaY);
-        // probar si la celda está ocupada
-        if (celda==null) {
-            // Celda vacía, entonces el personaje puede avazar
-            mario.caer();
-        } else {
-            // Dejarlo sobre la celda que lo detiene
-            mario.setPosicion(mario.getX(), (celdaY+1)* TAM_CELDA);
+        switch (mario.getEstado()) {
+            case INICIANDO:
+                // Los bloques en el mapa son de 16x16
+                // Calcula la celda donde estaría después de moverlo
+                int celdaX = (int)(mario.getX()/ TAM_CELDA);
+                int celdaY = (int)((mario.getY()+mario.VELOCIDAD_Y)/ TAM_CELDA);
+                // Recuperamos la celda en esta posición
+                // La capa 0 es el fondo
+                TiledMapTileLayer capa = (TiledMapTileLayer)mapa.getLayers().get(1);
+                TiledMapTileLayer.Cell celda = capa.getCell(celdaX, celdaY);
+                // probar si la celda está ocupada
+                if (celda==null) {
+                    // Celda vacía, entonces el personaje puede avazar
+                    mario.caer();
+                } else {
+                    // Dejarlo sobre la celda que lo detiene
+                    mario.setPosicion(mario.getX(), (celdaY+1)* TAM_CELDA);
+                    mario.setEstado(Personaje.Estado.QUIETO);
+                }
+                break;
         }
+
     }
 
     private void borrarPantalla() {

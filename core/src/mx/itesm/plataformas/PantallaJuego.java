@@ -37,6 +37,14 @@ public class PantallaJuego implements Screen
     private Personaje mario;
     public static final int TAM_CELDA = 16;
 
+    // HUD. Los componentes en la pantalla que no se mueven
+    private OrthographicCamera camaraHUD;   // Cámara fija
+    // Botones izquierda/derecha
+    private Texture texturaBtnIzquierda;
+    private Boton btnIzquierda;
+    private Texture texturaBtnDerecha;
+    private Boton btnDerecha;
+
     public PantallaJuego(Plataforma plataforma) {
         this.plataforma = plataforma;
     }
@@ -51,6 +59,11 @@ public class PantallaJuego implements Screen
 
         batch = new SpriteBatch();
 
+        // Cámara para HUD
+        camaraHUD = new OrthographicCamera(Plataforma.ANCHO_CAMARA, Plataforma.ALTO_CAMARA);
+        camaraHUD.position.set(Plataforma.ANCHO_CAMARA / 2, Plataforma.ALTO_CAMARA / 2, 0);
+        camaraHUD.update();
+
         cargarRecursos();
         crearObjetos();
     }
@@ -61,25 +74,42 @@ public class PantallaJuego implements Screen
         AssetManager assetManager = plataforma.getAssetManager();   // Referencia al assetManager
         assetManager.load("Mapa.tmx", TiledMap.class);  // Cargar info del mapa
         assetManager.load("marioSprite.png", Texture.class);    // Cargar imagen
+        // Texturas de los botones
+        assetManager.load("derecha.png", Texture.class);
+        assetManager.load("izquierda.png", Texture.class);
 
         // Se bloquea hasta que cargue todos los recursos
         assetManager.finishLoading();
     }
 
     private void crearObjetos() {
+        AssetManager assetManager = plataforma.getAssetManager();   // Referencia al assetManager
         // Carga el mapa en memoria
-        mapa = plataforma.getAssetManager().get("Mapa.tmx");
+        mapa = assetManager.get("Mapa.tmx");
         // Crear el objeto que dibujará el mapa
         rendererMapa = new OrthogonalTiledMapRenderer(mapa,batch);
         // Cargar frames
-        texturaPersonaje = plataforma.getAssetManager().get("marioSprite.png");
+        texturaPersonaje = assetManager.get("marioSprite.png");
+        // Crear el personaje
         mario = new Personaje(texturaPersonaje);
         // Posición inicial del personaje
         mario.getSprite().setPosition(Plataforma.ANCHO_CAMARA / 10, Plataforma.ALTO_CAMARA * 0.90f);
+
+        // Crear los botones
+        texturaBtnIzquierda = assetManager.get("izquierda.png");
+        btnIzquierda = new Boton(texturaBtnIzquierda);
+        btnIzquierda.setPosicion(TAM_CELDA,3*TAM_CELDA);
+        btnIzquierda.setAlfa(0.7f); // Un poco de transparencia
+
+        texturaBtnDerecha = assetManager.get("derecha.png");
+        btnDerecha = new Boton(texturaBtnDerecha);
+        btnDerecha.setPosicion(6*TAM_CELDA,3*TAM_CELDA);
+        btnDerecha.setAlfa(0.7f); // Un poco de transparencia
     }
 
     /*
-    Dibuja TODOS los elementos del juego en la pantalla
+    Dibuja TODOS los elementos del juego en la pantalla.
+    Este método se está repitiendo muchas veces por segundo.
      */
     @Override
     public void render(float delta) { // delta es el tiempo entre frames (Gdx.graphics.getDeltaTime())
@@ -102,6 +132,13 @@ public class PantallaJuego implements Screen
 
         mario.render(batch);    // Dibuja el personaje
 
+        batch.end();
+
+        // Dibuja el HUD
+        batch.setProjectionMatrix(camaraHUD.combined);
+        batch.begin();
+        btnIzquierda.render(batch);
+        btnDerecha.render(batch);
         batch.end();
     }
 

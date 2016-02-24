@@ -82,11 +82,11 @@ public class PantallaJuego implements Screen
     Dibuja TODOS los elementos del juego en la pantalla
      */
     @Override
-    public void render(float delta) {   // delta es el tiempo entre frames
+    public void render(float delta) { // delta es el tiempo entre frames (Gdx.graphics.getDeltaTime())
         // Leer entrada
 
         // Actualizar objetos en la pantalla
-        //mario.caer(); // Ahora depende del mapa
+        //mario.caer(); // Ahora depende del mapa y el estado
         moverPersonaje();
 
         // Dibujar

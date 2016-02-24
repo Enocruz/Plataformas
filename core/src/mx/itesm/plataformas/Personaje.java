@@ -46,13 +46,14 @@ public class Personaje
 
     // Dibuja el personaje
     public void render(SpriteBatch batch) {
-        // Incrementa el timer para calcular el frame que se dibuja
-        timerAnimacion += Gdx.graphics.getDeltaTime();
-        // Obtiene el frame que se debe mostrar (de acuerdo al timer)
-        TextureRegion region = animacion.getKeyFrame(timerAnimacion);
-        // Dibuaj el personaje dependiendo del estado
+
+        // Dibuja el personaje dependiendo del estado
         switch (estado) {
             case INICIANDO:
+                // Incrementa el timer para calcular el frame que se dibuja
+                timerAnimacion += Gdx.graphics.getDeltaTime();
+                // Obtiene el frame que se debe mostrar (de acuerdo al timer)
+                TextureRegion region = animacion.getKeyFrame(timerAnimacion);
                 // Dibuja el frame en las coordenadas del sprite
                 batch.draw(region, sprite.getX(), sprite.getY());
                 break;

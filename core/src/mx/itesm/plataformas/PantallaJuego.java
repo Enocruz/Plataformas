@@ -98,25 +98,23 @@ public class PantallaJuego implements Screen
         // Crear los botones
         texturaBtnIzquierda = assetManager.get("izquierda.png");
         btnIzquierda = new Boton(texturaBtnIzquierda);
-        btnIzquierda.setPosicion(TAM_CELDA,3*TAM_CELDA);
+        btnIzquierda.setPosicion(TAM_CELDA,5*TAM_CELDA);
         btnIzquierda.setAlfa(0.7f); // Un poco de transparencia
-
         texturaBtnDerecha = assetManager.get("derecha.png");
         btnDerecha = new Boton(texturaBtnDerecha);
-        btnDerecha.setPosicion(6*TAM_CELDA,3*TAM_CELDA);
+        btnDerecha.setPosicion(6*TAM_CELDA,5*TAM_CELDA);
         btnDerecha.setAlfa(0.7f); // Un poco de transparencia
     }
 
     /*
     Dibuja TODOS los elementos del juego en la pantalla.
-    Este método se está repitiendo muchas veces por segundo.
+    Este método se está ejecutando muchas veces por segundo.
      */
     @Override
     public void render(float delta) { // delta es el tiempo entre frames (Gdx.graphics.getDeltaTime())
         // Leer entrada
 
         // Actualizar objetos en la pantalla
-        //mario.caer(); // Ahora depende del mapa y el estado
         moverPersonaje();
 
         // Dibujar
@@ -200,5 +198,7 @@ public class PantallaJuego implements Screen
     public void dispose() {
         texturaPersonaje.dispose();
         mapa.dispose();
+        texturaBtnDerecha.dispose();
+        texturaBtnIzquierda.dispose();
     }
 }

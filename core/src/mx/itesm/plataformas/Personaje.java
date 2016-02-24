@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 public class Personaje
 {
     public static final float VELOCIDAD_Y = -2f;   // Velocidad de caída
+    private static final float VELOCIDAD_X = 2;
     private Sprite sprite;  // Sprite cuando no se mueve
 
     // Animación
@@ -50,6 +51,8 @@ public class Personaje
         // Dibuja el personaje dependiendo del estado
         switch (estado) {
             case INICIANDO:
+            case MOV_DERECHA:
+            case MOV_IZQUIERDA:
                 // Incrementa el timer para calcular el frame que se dibuja
                 timerAnimacion += Gdx.graphics.getDeltaTime();
                 // Obtiene el frame que se debe mostrar (de acuerdo al timer)
@@ -66,9 +69,24 @@ public class Personaje
 
     // Actualiza el sprite, de acuerdo al estado
     public void actualizar() {
+        float nuevaX = sprite.getX();
         switch (estado) {
             case INICIANDO: // Caída inicial
                 sprite.setY(sprite.getY() + VELOCIDAD_Y);
+                break;
+            case MOV_DERECHA:
+                // Prueba que no salga del mundo
+                nuevaX += VELOCIDAD_X;
+                if (nuevaX<=PantallaJuego.ANCHO_MAPA-sprite.getWidth()) {
+                    sprite.setX(nuevaX);
+                }
+                break;
+            case MOV_IZQUIERDA:
+                // Prueba que no salga del mundo
+                nuevaX -= VELOCIDAD_X;
+                if (nuevaX>=0) {
+                    sprite.setX(nuevaX);
+                }
                 break;
         }
     }

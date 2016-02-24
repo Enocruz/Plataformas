@@ -47,4 +47,8 @@ public class Boton
     public void setAlfa(float alfa) {
         sprite.setAlpha(alfa);
     }
+
+    public boolean contiene(float x, float y) {
+        return rectColision.contains(x,y);
+    }
 }

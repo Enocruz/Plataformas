@@ -1,6 +1,7 @@
 package mx.itesm.plataformas;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.GL20;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 /**
@@ -19,6 +21,8 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  */
 public class PantallaJuego implements Screen
 {
+    public static final float ANCHO_MAPA = 1280;   // Como se creó en Tiled
+
     // Referencia al objeto de tipo Game (tiene setScreen para cambiar de pantalla)
     private Plataforma plataforma;
 
@@ -66,6 +70,9 @@ public class PantallaJuego implements Screen
 
         cargarRecursos();
         crearObjetos();
+
+        // Indicar el objeto que atiende los eventos de touch (entrada en general)
+        Gdx.input.setInputProcessor(new ProcesadorEntrada());
     }
 
     // Carga los recursos a través del administrador de assets
@@ -88,6 +95,7 @@ public class PantallaJuego implements Screen
         mapa = assetManager.get("Mapa.tmx");
         // Crear el objeto que dibujará el mapa
         rendererMapa = new OrthogonalTiledMapRenderer(mapa,batch);
+        rendererMapa.setView(camara);
         // Cargar frames
         texturaPersonaje = assetManager.get("marioSprite.png");
         // Crear el personaje
@@ -98,11 +106,11 @@ public class PantallaJuego implements Screen
         // Crear los botones
         texturaBtnIzquierda = assetManager.get("izquierda.png");
         btnIzquierda = new Boton(texturaBtnIzquierda);
-        btnIzquierda.setPosicion(TAM_CELDA,5*TAM_CELDA);
+        btnIzquierda.setPosicion(TAM_CELDA, 5 * TAM_CELDA);
         btnIzquierda.setAlfa(0.7f); // Un poco de transparencia
         texturaBtnDerecha = assetManager.get("derecha.png");
         btnDerecha = new Boton(texturaBtnDerecha);
-        btnDerecha.setPosicion(6*TAM_CELDA,5*TAM_CELDA);
+        btnDerecha.setPosicion(6 * TAM_CELDA, 5 * TAM_CELDA);
         btnDerecha.setAlfa(0.7f); // Un poco de transparencia
     }
 
@@ -116,14 +124,15 @@ public class PantallaJuego implements Screen
 
         // Actualizar objetos en la pantalla
         moverPersonaje();
+        actualizarCamara(); // Mover la cámara para que siga al personaje
 
         // Dibujar
         borrarPantalla();
 
         batch.setProjectionMatrix(camara.combined);
 
-        rendererMapa.setView(camara);
         rendererMapa.render();  // Dibuja el mapa
+        rendererMapa.setView(camara);
 
         // Entre begin/end dibujamos nuestros objetos en pantalla
         batch.begin();
@@ -138,6 +147,21 @@ public class PantallaJuego implements Screen
         btnIzquierda.render(batch);
         btnDerecha.render(batch);
         batch.end();
+
+    }
+
+    // Actualiza la posición de la cámara para que el personaje esté en centro,
+    // excepto cuando esta en la primera y última parte del mundo
+    private void actualizarCamara() {
+        // Si está en la parte 'media'
+        if (mario.getX()>=Plataforma.ANCHO_CAMARA/2 && mario.getX()<ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {
+            // El personaje define el centro de la cámara
+            camara.position.set(mario.getX(), camara.position.y, 0);
+            camara.update();
+        } else if (mario.getX()>=ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {    // Si está en la última mitad
+            // La cámara se queda media pantalla antes del fin del mundo  :)
+            camara.position.set(ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2, camara.position.y, 0);
+        }
     }
 
     /*
@@ -164,12 +188,16 @@ public class PantallaJuego implements Screen
                     mario.setEstado(Personaje.Estado.QUIETO);
                 }
                 break;
+            case MOV_DERECHA:       // Siempre se mueve
+            case MOV_IZQUIERDA:
+                mario.actualizar();
+                break;
         }
 
     }
 
     private void borrarPantalla() {
-        Gdx.gl.glClearColor(0, 0, 0, 1);    // Color de fondo
+        Gdx.gl.glClearColor(1, 1, 1, 1);    // Color de fondo
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     }
 
@@ -200,5 +228,42 @@ public class PantallaJuego implements Screen
         mapa.dispose();
         texturaBtnDerecha.dispose();
         texturaBtnIzquierda.dispose();
+    }
+
+    /*
+    Clase utilizada para manejar los eventos de touch en la pantalla
+     */
+    public class ProcesadorEntrada extends InputAdapter
+    {
+        private Vector3 coordenadas = new Vector3();
+        private float x, y;     // Las coordenadas en la pantalla virtual
+        /*
+        Se ejecuta cuando el usuario pone un dedo sobre la pantalla, los dos primeros parámetros
+        son las coordenadas relativas a la pantalla física (0,0) en la esquina superior izquierda
+        pointer - es el número de dedo que se pone en la pantalla, el primero es 0
+        button - el botón del mouse
+         */
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+            transformarCoordenadas(screenX, screenY);
+            // Preguntar si está dentro del botón derecho
+            if (btnDerecha.contiene(x,y)) {
+                // Tocó el botón derecha, hacer que el personaje se mueva a la derecha
+                mario.setEstado(Personaje.Estado.MOV_DERECHA);
+            } else if (btnIzquierda.contiene(x,y)) {
+                // Tocó el botón izquierda, hacer que el personaje se mueva a la izquierda
+                mario.setEstado(Personaje.Estado.MOV_IZQUIERDA);
+            }
+            return true;    // Indica que ya procesó el evento
+        }
+
+        private void transformarCoordenadas(int screenX, int screenY) {
+            // Transformar las coordenadas de la pantalla física a la cámara HUD
+            coordenadas.set(screenX, screenY, 0);
+            camaraHUD.unproject(coordenadas);
+            // Obtiene las coordenadas relativas a la pantalla virtual
+            x = coordenadas.x;
+            y = coordenadas.y;
+        }
     }
 }

@@ -157,7 +157,7 @@ public class PantallaJuego implements Screen
                 // probar si la celda está ocupada
                 if (celda==null) {
                     // Celda vacía, entonces el personaje puede avazar
-                    mario.caer();
+                    mario.actualizar();
                 } else {
                     // Dejarlo sobre la celda que lo detiene
                     mario.setPosicion(mario.getX(), (celdaY+1)* TAM_CELDA);

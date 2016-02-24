@@ -65,7 +65,7 @@ public class Personaje
     }
 
     // Actualiza el sprite, de acuerdo al estado
-    public void caer() {
+    public void actualizar() {
         switch (estado) {
             case INICIANDO: // Caída inicial
                 sprite.setY(sprite.getY() + VELOCIDAD_Y);

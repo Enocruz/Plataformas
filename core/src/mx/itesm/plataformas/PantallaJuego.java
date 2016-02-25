@@ -93,6 +93,7 @@ public class PantallaJuego implements Screen
         AssetManager assetManager = plataforma.getAssetManager();   // Referencia al assetManager
         // Carga el mapa en memoria
         mapa = assetManager.get("Mapa.tmx");
+        //mapa.getLayers().get(0).setVisible(false);
         // Crear el objeto que dibujará el mapa
         rendererMapa = new OrthogonalTiledMapRenderer(mapa,batch);
         rendererMapa.setView(camara);
@@ -131,10 +132,10 @@ public class PantallaJuego implements Screen
 
         batch.setProjectionMatrix(camara.combined);
 
-        rendererMapa.render();  // Dibuja el mapa
         rendererMapa.setView(camara);
+        rendererMapa.render();  // Dibuja el mapa
 
-        // Entre begin/end dibujamos nuestros objetos en pantalla
+        // Entre begin-end dibujamos nuestros objetos en pantalla
         batch.begin();
 
         mario.render(batch);    // Dibuja el personaje
@@ -150,18 +151,19 @@ public class PantallaJuego implements Screen
 
     }
 
-    // Actualiza la posición de la cámara para que el personaje esté en centro,
+    // Actualiza la posición de la cámara para que el personaje esté en el centro,
     // excepto cuando esta en la primera y última parte del mundo
     private void actualizarCamara() {
+        float posX = mario.getX();
         // Si está en la parte 'media'
-        if (mario.getX()>=Plataforma.ANCHO_CAMARA/2 && mario.getX()<ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {
+        if (posX>=Plataforma.ANCHO_CAMARA/2 && posX<=ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {
             // El personaje define el centro de la cámara
-            camara.position.set(mario.getX(), camara.position.y, 0);
-            camara.update();
-        } else if (mario.getX()>=ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {    // Si está en la última mitad
+            camara.position.set((int)posX, camara.position.y, 0);
+        } else if (posX>ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {    // Si está en la última mitad
             // La cámara se queda media pantalla antes del fin del mundo  :)
             camara.position.set(ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2, camara.position.y, 0);
         }
+        camara.update();
     }
 
     /*
@@ -197,7 +199,8 @@ public class PantallaJuego implements Screen
     }
 
     private void borrarPantalla() {
-        Gdx.gl.glClearColor(1, 1, 1, 1);    // Color de fondo
+        //Gdx.gl.glClearColor(1, 1, 1, 1);    // Color de fondo
+        Gdx.gl.glClearColor(107 / 255f, 140f / 255, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     }
 

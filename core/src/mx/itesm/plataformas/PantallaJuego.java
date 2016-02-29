@@ -142,7 +142,7 @@ public class PantallaJuego implements Screen
         btnGana = new Boton(texturaGana);
         btnGana.setPosicion(Plataforma.ANCHO_CAMARA/2-btnGana.getRectColision().width/2,
                 Plataforma.ALTO_CAMARA/2-btnGana.getRectColision().height/2);
-        btnGana.setAlfa(0.8f);
+        btnGana.setAlfa(0.7f);
     }
 
     /*

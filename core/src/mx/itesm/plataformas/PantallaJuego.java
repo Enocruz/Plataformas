@@ -54,6 +54,13 @@ public class PantallaJuego implements Screen
     private Texture texturaSalto;
     private Boton btnSalto;
 
+    // Fin del juego, Gana o Pierde
+    private Texture texturaGana;
+    private Boton btnGana;
+
+    // Estados del juego
+    private EstadosJuego estadoJuego;
+
     public PantallaJuego(Plataforma plataforma) {
         this.plataforma = plataforma;
     }
@@ -81,6 +88,8 @@ public class PantallaJuego implements Screen
 
         // Indicar el objeto que atiende los eventos de touch (entrada en general)
         Gdx.input.setInputProcessor(new ProcesadorEntrada());
+
+        estadoJuego = EstadosJuego.JUGANDO;
     }
 
     // Carga los recursos a través del administrador de assets
@@ -93,6 +102,8 @@ public class PantallaJuego implements Screen
         assetManager.load("derecha.png", Texture.class);
         assetManager.load("izquierda.png", Texture.class);
         assetManager.load("salto.png", Texture.class);
+        // Fin del juego
+        assetManager.load("ganaste.png", Texture.class);
 
         // Se bloquea hasta que cargue todos los recursos
         assetManager.finishLoading();
@@ -126,6 +137,12 @@ public class PantallaJuego implements Screen
         btnSalto = new Boton(texturaSalto);
         btnSalto.setPosicion(Plataforma.ANCHO_CAMARA - 5 * TAM_CELDA, 5 * TAM_CELDA);
         btnSalto.setAlfa(0.7f);
+        // Gana
+        texturaGana = assetManager.get("ganaste.png");
+        btnGana = new Boton(texturaGana);
+        btnGana.setPosicion(Plataforma.ANCHO_CAMARA/2-btnGana.getRectColision().width/2,
+                Plataforma.ALTO_CAMARA/2-btnGana.getRectColision().height/2);
+        btnGana.setAlfa(0.8f);
     }
 
     /*
@@ -158,9 +175,15 @@ public class PantallaJuego implements Screen
         // Dibuja el HUD
         batch.setProjectionMatrix(camaraHUD.combined);
         batch.begin();
-        btnIzquierda.render(batch);
-        btnDerecha.render(batch);
-        btnSalto.render(batch);
+
+        // ¿Ya ganó?
+        if (estadoJuego==EstadosJuego.GANO) {
+            btnGana.render(batch);
+        } else {
+            btnIzquierda.render(batch);
+            btnDerecha.render(batch);
+            btnSalto.render(batch);
+        }
         batch.end();
     }
 
@@ -233,7 +256,10 @@ public class PantallaJuego implements Screen
 
                 if ( esMoneda(celdaAbajo) || esMoneda(celdaDerecha)) {
                     // La encontró!!!!
-                    Gdx.app.exit();
+                    estadoJuego = EstadosJuego.GANO;
+                    btnIzquierda.setAlfa(0.2f);
+                    btnDerecha.setAlfa(0.2f);
+                    btnSalto.setAlfa(0.2f);
                 }
             }
         }
@@ -289,6 +315,7 @@ public class PantallaJuego implements Screen
         assetManager.unload("marioSprite.png");
         assetManager.unload("derecha.png");
         assetManager.unload("izquierda.png");
+        assetManager.unload("ganaste.png");
         assetManager.unload("Mapa.tmx");
     }
 
@@ -309,16 +336,22 @@ public class PantallaJuego implements Screen
         @Override
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
             transformarCoordenadas(screenX, screenY);
-            // Preguntar si las coordenadas están sobre el botón derecho
-            if (btnDerecha.contiene(x,y) && mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.INICIANDO) {
-                // Tocó el botón derecha, hacer que el personaje se mueva a la derecha
-                mario.setEstadoMovimiento(Personaje.EstadoMovimiento.MOV_DERECHA);
-            } else if (btnIzquierda.contiene(x,y) && mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.INICIANDO) {
-                // Tocó el botón izquierda, hacer que el personaje se mueva a la izquierda
-                mario.setEstadoMovimiento(Personaje.EstadoMovimiento.MOV_IZQUIERDA);
-            } else if (btnSalto.contiene(x,y)) {
-                // Tocó el botón saltar
-                mario.saltar();
+            if (estadoJuego==EstadosJuego.JUGANDO) {
+                // Preguntar si las coordenadas están sobre el botón derecho
+                if (btnDerecha.contiene(x, y) && mario.getEstadoMovimiento() != Personaje.EstadoMovimiento.INICIANDO) {
+                    // Tocó el botón derecha, hacer que el personaje se mueva a la derecha
+                    mario.setEstadoMovimiento(Personaje.EstadoMovimiento.MOV_DERECHA);
+                } else if (btnIzquierda.contiene(x, y) && mario.getEstadoMovimiento() != Personaje.EstadoMovimiento.INICIANDO) {
+                    // Tocó el botón izquierda, hacer que el personaje se mueva a la izquierda
+                    mario.setEstadoMovimiento(Personaje.EstadoMovimiento.MOV_IZQUIERDA);
+                } else if (btnSalto.contiene(x, y)) {
+                    // Tocó el botón saltar
+                    mario.saltar();
+                }
+            } else if (estadoJuego==EstadosJuego.GANO) {
+                if (btnGana.contiene(x,y)) {
+                    Gdx.app.exit();
+                }
             }
             return true;    // Indica que ya procesó el evento
         }
@@ -345,5 +378,12 @@ public class PantallaJuego implements Screen
             x = coordenadas.x;
             y = coordenadas.y;
         }
+    }
+
+    public enum EstadosJuego {
+        GANO,
+        JUGANDO,
+        PAUSADO,
+        PERDIO
     }
 }

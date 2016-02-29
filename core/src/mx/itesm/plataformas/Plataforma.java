@@ -39,4 +39,10 @@ public class Plataforma extends Game
 	public AssetManager getAssetManager() {
 		return assetManager;
 	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		assetManager.clear();
+	}
 }

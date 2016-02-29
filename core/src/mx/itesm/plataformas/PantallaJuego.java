@@ -14,6 +14,7 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+
 /**
  * Pantalla principal del juego, muestra un mapa y el personaje
  *
@@ -21,7 +22,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  */
 public class PantallaJuego implements Screen
 {
-    public static final float ANCHO_MAPA = 1280;   // Como se creó en Tiled
+    public static final float ANCHO_MAPA = 1280;   // Ancho del mapa en pixeles
 
     // Referencia al objeto de tipo Game (tiene setScreen para cambiar de pantalla)
     private Plataforma plataforma;
@@ -29,6 +30,7 @@ public class PantallaJuego implements Screen
     // La cámara y vista principal
     private OrthographicCamera camara;
     private Viewport vista;
+
     // Objeto para dibujar en la pantalla
     private SpriteBatch batch;
 
@@ -48,11 +50,17 @@ public class PantallaJuego implements Screen
     private Boton btnIzquierda;
     private Texture texturaBtnDerecha;
     private Boton btnDerecha;
+    // Botón saltar
+    private Texture texturaSalto;
+    private Boton btnSalto;
 
     public PantallaJuego(Plataforma plataforma) {
         this.plataforma = plataforma;
     }
 
+    /*
+    Se ejecuta al mostrar este Screen como pantalla de la app
+     */
     @Override
     public void show() {
         // Crea la cámara/vista
@@ -84,6 +92,7 @@ public class PantallaJuego implements Screen
         // Texturas de los botones
         assetManager.load("derecha.png", Texture.class);
         assetManager.load("izquierda.png", Texture.class);
+        assetManager.load("salto.png", Texture.class);
 
         // Se bloquea hasta que cargue todos los recursos
         assetManager.finishLoading();
@@ -113,6 +122,10 @@ public class PantallaJuego implements Screen
         btnDerecha = new Boton(texturaBtnDerecha);
         btnDerecha.setPosicion(6 * TAM_CELDA, 5 * TAM_CELDA);
         btnDerecha.setAlfa(0.7f); // Un poco de transparencia
+        texturaSalto = assetManager.get("salto.png");
+        btnSalto = new Boton(texturaSalto);
+        btnSalto.setPosicion(Plataforma.ANCHO_CAMARA - 5 * TAM_CELDA, 5 * TAM_CELDA);
+        btnSalto.setAlfa(0.7f);
     }
 
     /*
@@ -147,12 +160,12 @@ public class PantallaJuego implements Screen
         batch.begin();
         btnIzquierda.render(batch);
         btnDerecha.render(batch);
+        btnSalto.render(batch);
         batch.end();
-
     }
 
     // Actualiza la posición de la cámara para que el personaje esté en el centro,
-    // excepto cuando esta en la primera y última parte del mundo
+    // excepto cuando está en la primera y última parte del mundo
     private void actualizarCamara() {
         float posX = mario.getX();
         // Si está en la parte 'media'
@@ -160,18 +173,19 @@ public class PantallaJuego implements Screen
             // El personaje define el centro de la cámara
             camara.position.set((int)posX, camara.position.y, 0);
         } else if (posX>ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2) {    // Si está en la última mitad
-            // La cámara se queda media pantalla antes del fin del mundo  :)
+            // La cámara se queda a media pantalla antes del fin del mundo  :)
             camara.position.set(ANCHO_MAPA-Plataforma.ANCHO_CAMARA/2, camara.position.y, 0);
         }
         camara.update();
     }
 
     /*
-    Mueve el personaje en Y hasta que se encuentre sobre un bloque
+    Movimiento del personaje. SIMPLIFICAR LOGICA :(
      */
     private void moverPersonaje() {
-        switch (mario.getEstado()) {
-            case INICIANDO:
+        // Prueba caída libre inicial o movimiento horizontal
+        switch (mario.getEstadoMovimiento()) {
+            case INICIANDO:     // Mueve el personaje en Y hasta que se encuentre sobre un bloque
                 // Los bloques en el mapa son de 16x16
                 // Calcula la celda donde estaría después de moverlo
                 int celdaX = (int)(mario.getX()/ TAM_CELDA);
@@ -182,25 +196,68 @@ public class PantallaJuego implements Screen
                 TiledMapTileLayer.Cell celda = capa.getCell(celdaX, celdaY);
                 // probar si la celda está ocupada
                 if (celda==null) {
-                    // Celda vacía, entonces el personaje puede avazar
-                    mario.actualizar();
+                    // Celda vacía, entonces el personaje puede avanzar
+                    mario.caer();
                 } else {
                     // Dejarlo sobre la celda que lo detiene
-                    mario.setPosicion(mario.getX(), (celdaY+1)* TAM_CELDA);
-                    mario.setEstado(Personaje.Estado.QUIETO);
+                    mario.setPosicion(mario.getX(), (celdaY + 1) * TAM_CELDA);
+                    mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
                 }
                 break;
-            case MOV_DERECHA:       // Siempre se mueve
+            case MOV_DERECHA:       // Se mueve horizontal
             case MOV_IZQUIERDA:
                 mario.actualizar();
                 break;
         }
 
+        // Prueba si debe caer por llegar a un espacio vacío
+        if ( mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.INICIANDO
+                && (mario.getEstadoSalto() != Personaje.EstadoSalto.SUBIENDO) ) {
+            // Calcula la celda donde estaría después de moverlo
+            int celdaX = (int) (mario.getX() / TAM_CELDA);
+            int celdaY = (int) ((mario.getY() + mario.VELOCIDAD_Y) / TAM_CELDA);
+            // Recuperamos la celda en esta posición
+            // La capa 0 es el fondo
+            TiledMapTileLayer capa = (TiledMapTileLayer) mapa.getLayers().get(1);
+            TiledMapTileLayer.Cell celdaAbajo = capa.getCell(celdaX, celdaY);
+            TiledMapTileLayer.Cell celdaDerecha = capa.getCell(celdaX+1, celdaY);
+            // probar si la celda está ocupada
+            if ( celdaAbajo==null && celdaDerecha==null ) {
+                // Celda vacía, entonces el personaje puede avanzar
+                mario.caer();
+                mario.setEstadoSalto(Personaje.EstadoSalto.CAIDA_LIBRE);
+            } else {
+                // Dejarlo sobre la celda que lo detiene
+                mario.setPosicion(mario.getX(), (celdaY + 1) * TAM_CELDA);
+                mario.setEstadoSalto(Personaje.EstadoSalto.EN_PISO);
+
+                if ( esMoneda(celdaAbajo) || esMoneda(celdaDerecha)) {
+                    // La encontró!!!!
+                    Gdx.app.exit();
+                }
+            }
+        }
+
+        // Saltar
+        switch (mario.getEstadoSalto()) {
+            case SUBIENDO:
+            case BAJANDO:
+                mario.actualizarSalto();    // Actualizar posición en 'y'
+                break;
+        }
+    }
+
+    private boolean esMoneda(TiledMapTileLayer.Cell celda) {
+        if (celda==null) {
+            return false;
+        }
+        Object propiedad = celda.getTile().getProperties().get("tipo");
+
+        return "moneda".equals(propiedad);
     }
 
     private void borrarPantalla() {
-        //Gdx.gl.glClearColor(1, 1, 1, 1);    // Color de fondo
-        Gdx.gl.glClearColor(107 / 255f, 140f / 255, 1, 1);
+        Gdx.gl.glClearColor(0.42f, 0.55f, 1, 1);    // r, g, b, alpha
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     }
 
@@ -227,10 +284,12 @@ public class PantallaJuego implements Screen
     // Libera los assets
     @Override
     public void dispose() {
-        texturaPersonaje.dispose();
-        mapa.dispose();
-        texturaBtnDerecha.dispose();
-        texturaBtnIzquierda.dispose();
+        // Los assets se liberan a través del assetsManager
+        AssetManager assetManager = plataforma.getAssetManager();
+        assetManager.unload("marioSprite.png");
+        assetManager.unload("derecha.png");
+        assetManager.unload("izquierda.png");
+        assetManager.unload("Mapa.tmx");
     }
 
     /*
@@ -239,9 +298,10 @@ public class PantallaJuego implements Screen
     public class ProcesadorEntrada extends InputAdapter
     {
         private Vector3 coordenadas = new Vector3();
-        private float x, y;     // Las coordenadas en la pantalla virtual
+        private float x, y;     // Las coordenadas en la pantalla
+
         /*
-        Se ejecuta cuando el usuario pone un dedo sobre la pantalla, los dos primeros parámetros
+        Se ejecuta cuando el usuario PONE un dedo sobre la pantalla, los dos primeros parámetros
         son las coordenadas relativas a la pantalla física (0,0) en la esquina superior izquierda
         pointer - es el número de dedo que se pone en la pantalla, el primero es 0
         button - el botón del mouse
@@ -249,13 +309,30 @@ public class PantallaJuego implements Screen
         @Override
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
             transformarCoordenadas(screenX, screenY);
-            // Preguntar si está dentro del botón derecho
-            if (btnDerecha.contiene(x,y)) {
+            // Preguntar si las coordenadas están sobre el botón derecho
+            if (btnDerecha.contiene(x,y) && mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.INICIANDO) {
                 // Tocó el botón derecha, hacer que el personaje se mueva a la derecha
-                mario.setEstado(Personaje.Estado.MOV_DERECHA);
-            } else if (btnIzquierda.contiene(x,y)) {
+                mario.setEstadoMovimiento(Personaje.EstadoMovimiento.MOV_DERECHA);
+            } else if (btnIzquierda.contiene(x,y) && mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.INICIANDO) {
                 // Tocó el botón izquierda, hacer que el personaje se mueva a la izquierda
-                mario.setEstado(Personaje.Estado.MOV_IZQUIERDA);
+                mario.setEstadoMovimiento(Personaje.EstadoMovimiento.MOV_IZQUIERDA);
+            } else if (btnSalto.contiene(x,y)) {
+                // Tocó el botón saltar
+                mario.saltar();
+            }
+            return true;    // Indica que ya procesó el evento
+        }
+
+        /*
+        Se ejecuta cuando el usuario QUITA el dedo de la pantalla.
+         */
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+            transformarCoordenadas(screenX, screenY);
+            // Preguntar si las coordenadas son de algún botón para DETENER el movimiento
+            if ( mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.INICIANDO && (btnDerecha.contiene(x, y) || btnIzquierda.contiene(x,y)) ) {
+                // Tocó el botón derecha, hacer que el personaje se mueva a la derecha
+                mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
             }
             return true;    // Indica que ya procesó el evento
         }

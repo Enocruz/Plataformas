@@ -151,7 +151,6 @@ public class PantallaJuego implements Screen
      */
     @Override
     public void render(float delta) { // delta es el tiempo entre frames (Gdx.graphics.getDeltaTime())
-        // Leer entrada
 
         // Actualizar objetos en la pantalla
         moverPersonaje();
@@ -229,7 +228,7 @@ public class PantallaJuego implements Screen
                 break;
             case MOV_DERECHA:       // Se mueve horizontal
             case MOV_IZQUIERDA:
-                mario.actualizar();
+                probarChoqueParedes();      // Prueba si debe moverse
                 break;
         }
 
@@ -273,6 +272,32 @@ public class PantallaJuego implements Screen
         }
     }
 
+    // Prueba si puede moverse a la izquierda o derecha
+    private void probarChoqueParedes() {
+        Personaje.EstadoMovimiento estado = mario.getEstadoMovimiento();
+        // Quitar porque este método sólo se llama cuando se está moviendo
+        if ( estado!= Personaje.EstadoMovimiento.MOV_DERECHA && estado!=Personaje.EstadoMovimiento.MOV_IZQUIERDA){
+            return;
+        }
+        float px = mario.getX();    // Posición actual
+        // Posición después de actualizar
+        px = mario.getEstadoMovimiento()==Personaje.EstadoMovimiento.MOV_DERECHA? px+Personaje.VELOCIDAD_X:
+                px-Personaje.VELOCIDAD_X;
+        int celdaX = (int)(px/TAM_CELDA);   // Casilla del personaje en X
+        if (mario.getEstadoMovimiento()== Personaje.EstadoMovimiento.MOV_DERECHA) {
+            celdaX++;   // Casilla del lado derecho
+        }
+        int celdaY = (int)(mario.getY()/TAM_CELDA); // Casilla del personaje en Y
+        TiledMapTileLayer capaPlataforma = (TiledMapTileLayer) mapa.getLayers().get(1);
+        if ( capaPlataforma.getCell(celdaX,celdaY) != null ) {
+            // Colisionará, dejamos de moverlo
+            mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
+        } else {
+            mario.actualizar();
+        }
+    }
+
+    // Verifica si esta casilla tiene una moneda
     private boolean esMoneda(TiledMapTileLayer.Cell celda) {
         if (celda==null) {
             return false;
@@ -310,7 +335,7 @@ public class PantallaJuego implements Screen
     // Libera los assets
     @Override
     public void dispose() {
-        // Los assets se liberan a través del assetsManager
+        // Los assets se liberan a través del assetManager
         AssetManager assetManager = plataforma.getAssetManager();
         assetManager.unload("marioSprite.png");
         assetManager.unload("derecha.png");
@@ -369,6 +394,21 @@ public class PantallaJuego implements Screen
             }
             return true;    // Indica que ya procesó el evento
         }
+
+
+        // Se ejecuta cuando el usuario MUEVE el dedo sobre la pantalla
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) {
+            transformarCoordenadas(screenX, screenY);
+            // Acaba de salir de las fechas (y no es el botón de salto)
+            if (x<Plataforma.ANCHO_CAMARA/2 && mario.getEstadoMovimiento()!= Personaje.EstadoMovimiento.QUIETO) {
+                if (!btnIzquierda.contiene(x, y) && !btnDerecha.contiene(x, y) ) {
+                    mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
+                }
+            }
+            return true;
+        }
+
 
         private void transformarCoordenadas(int screenX, int screenY) {
             // Transformar las coordenadas de la pantalla física a la cámara HUD

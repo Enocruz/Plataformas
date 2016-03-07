@@ -13,7 +13,9 @@ import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
- * Created by rmroman on 04/03/16.
+ * Pantala intermedia entre el menú y el juego
+ *
+ * @author Roberto Mtz Román
  */
 public class PantallaCargando implements Screen
 {
@@ -24,11 +26,11 @@ public class PantallaCargando implements Screen
     private Viewport vista;
     private SpriteBatch batch;
 
-    // Cargando
+    // Imagen cargando
     private Texture texturaCargando;
     private Sprite spriteCargando;
 
-    private AssetManager assetManager;
+    private AssetManager assetManager;  // Asset manager principal
 
     public PantallaCargando(Plataforma plataforma) {
         this.plataforma = plataforma;
@@ -45,7 +47,7 @@ public class PantallaCargando implements Screen
 
         batch = new SpriteBatch();
 
-        // Cargar recurso
+        // Cargar recursos
         assetManager.load("cargando.png", Texture.class);
         assetManager.finishLoading();
         texturaCargando = assetManager.get("cargando.png");
@@ -56,7 +58,7 @@ public class PantallaCargando implements Screen
         cargarRecursos();
     }
 
-    // Carga los recursos a través del administrador de assets
+    // Carga los recursos a través del administrador de assets (siguiente pantalla)
     private void cargarRecursos() {
         // Carga los recursos de la siguiente pantalla (PantallaJuego)
         assetManager.load("Mapa.tmx", TiledMap.class);  // Cargar info del mapa
@@ -128,5 +130,6 @@ public class PantallaCargando implements Screen
     @Override
     public void dispose() {
         texturaCargando.dispose();
+        // Los assets de PantallaJuego se liberan en el método dispose de PantallaJuego
     }
 }

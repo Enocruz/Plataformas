@@ -146,6 +146,8 @@ public class Menu implements Screen
         // Los assets se liberan a través del assetManager
         AssetManager assetManager = plataforma.getAssetManager();
         assetManager.unload("fondo_A.jpg");
+        assetManager.unload("play.png");
+        assetManager.unload("about.png");
     }
 
     /*

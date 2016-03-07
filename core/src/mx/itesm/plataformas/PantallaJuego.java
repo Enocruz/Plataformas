@@ -83,15 +83,18 @@ public class PantallaJuego implements Screen
         camaraHUD.position.set(Plataforma.ANCHO_CAMARA / 2, Plataforma.ALTO_CAMARA / 2, 0);
         camaraHUD.update();
 
-        cargarRecursos();
+        //cargarRecursos();
         crearObjetos();
 
         // Indicar el objeto que atiende los eventos de touch (entrada en general)
         Gdx.input.setInputProcessor(new ProcesadorEntrada());
 
         estadoJuego = EstadosJuego.JUGANDO;
+
     }
 
+    // LOS RECURSOS SE CARGAN AHORA EN PantallaCargando
+    /*
     // Carga los recursos a través del administrador de assets
     private void cargarRecursos() {
         // Cargar las texturas/mapas
@@ -108,12 +111,13 @@ public class PantallaJuego implements Screen
         // Se bloquea hasta que cargue todos los recursos
         assetManager.finishLoading();
     }
+    */
 
     private void crearObjetos() {
         AssetManager assetManager = plataforma.getAssetManager();   // Referencia al assetManager
         // Carga el mapa en memoria
         mapa = assetManager.get("Mapa.tmx");
-        //mapa.getLayers().get(0).setVisible(false);
+        //mapa.getLayers().get(0).setVisible(false);    // Pueden ocultar una capa así
         // Crear el objeto que dibujará el mapa
         rendererMapa = new OrthogonalTiledMapRenderer(mapa,batch);
         rendererMapa.setView(camara);

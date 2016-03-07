@@ -197,7 +197,7 @@ public class Menu implements Screen
         private void transformarCoordenadas(int screenX, int screenY) {
             // Transformar las coordenadas de la pantalla física a la cámara HUD
             coordenadas.set(screenX, screenY, 0);
-            //camaraHUD.unproject(coordenadas);
+            camara.unproject(coordenadas);
             // Obtiene las coordenadas relativas a la pantalla virtual
             x = coordenadas.x;
             y = coordenadas.y;

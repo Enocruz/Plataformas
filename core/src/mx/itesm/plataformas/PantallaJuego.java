@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -54,6 +55,11 @@ public class PantallaJuego implements Screen
     private Texture texturaSalto;
     private Boton btnSalto;
 
+    // Estrellas recolectadas
+    private int estrellas;
+    private Texto texto;
+    private Sound sonidoMoneda;
+
     // Fin del juego, Gana o Pierde
     private Texture texturaGana;
     private Boton btnGana;
@@ -91,6 +97,8 @@ public class PantallaJuego implements Screen
 
         estadoJuego = EstadosJuego.JUGANDO;
 
+        // Texto
+        texto = new Texto();
     }
 
     // LOS RECURSOS SE CARGAN AHORA EN PantallaCargando
@@ -147,6 +155,9 @@ public class PantallaJuego implements Screen
         btnGana.setPosicion(Plataforma.ANCHO_CAMARA/2-btnGana.getRectColision().width/2,
                 Plataforma.ALTO_CAMARA/2-btnGana.getRectColision().height/2);
         btnGana.setAlfa(0.7f);
+
+        // Efecto moneda
+        sonidoMoneda = assetManager.get("coin.wav");
     }
 
     /*
@@ -186,6 +197,8 @@ public class PantallaJuego implements Screen
             btnIzquierda.render(batch);
             btnDerecha.render(batch);
             btnSalto.render(batch);
+            // Estrellas recolectadas
+            texto.mostrarMensaje(batch,"Estrellas: "+estrellas,Plataforma.ANCHO_CAMARA/2,Plataforma.ALTO_CAMARA*0.95f);
         }
         batch.end();
     }
@@ -224,7 +237,7 @@ public class PantallaJuego implements Screen
                 if (celda==null) {
                     // Celda vacía, entonces el personaje puede avanzar
                     mario.caer();
-                } else {
+                } else if ( !esEstrella(celda) ) {  // Las estrellas no lo detiene :)
                     // Dejarlo sobre la celda que lo detiene
                     mario.setPosicion(mario.getX(), (celdaY + 1) * TAM_CELDA);
                     mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
@@ -248,7 +261,7 @@ public class PantallaJuego implements Screen
             TiledMapTileLayer.Cell celdaAbajo = capa.getCell(celdaX, celdaY);
             TiledMapTileLayer.Cell celdaDerecha = capa.getCell(celdaX+1, celdaY);
             // probar si la celda está ocupada
-            if ( celdaAbajo==null && celdaDerecha==null ) {
+            if ( (celdaAbajo==null && celdaDerecha==null) || esEstrella(celdaAbajo) || esEstrella(celdaDerecha) ) {
                 // Celda vacía, entonces el personaje puede avanzar
                 mario.caer();
                 mario.setEstadoSalto(Personaje.EstadoSalto.CAIDA_LIBRE);
@@ -293,9 +306,21 @@ public class PantallaJuego implements Screen
         }
         int celdaY = (int)(mario.getY()/TAM_CELDA); // Casilla del personaje en Y
         TiledMapTileLayer capaPlataforma = (TiledMapTileLayer) mapa.getLayers().get(1);
-        if ( capaPlataforma.getCell(celdaX,celdaY) != null ) {
+        if ( capaPlataforma.getCell(celdaX,celdaY) != null || capaPlataforma.getCell(celdaX,celdaY+1) != null ) {
             // Colisionará, dejamos de moverlo
-            mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
+            if ( esEstrella(capaPlataforma.getCell(celdaX,celdaY)) ) {
+                // Borrar esta estrella y contabilizar
+                capaPlataforma.setCell(celdaX,celdaY,null);
+                estrellas++;
+                sonidoMoneda.play();
+            } else if ( esEstrella(capaPlataforma.getCell(celdaX,celdaY+1)) ) {
+                // Borrar esta estrella y contabilizar
+                capaPlataforma.setCell(celdaX,celdaY+1,null);
+                estrellas++;
+                sonidoMoneda.play();
+            } else {
+                mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
+            }
         } else {
             mario.actualizar();
         }
@@ -309,6 +334,15 @@ public class PantallaJuego implements Screen
         Object propiedad = celda.getTile().getProperties().get("tipo");
 
         return "moneda".equals(propiedad);
+    }
+
+    // Verifica si esta casilla tiene una estrella (simplificar con la anterior)
+    private boolean esEstrella(TiledMapTileLayer.Cell celda) {
+        if (celda==null) {
+            return false;
+        }
+        Object propiedad = celda.getTile().getProperties().get("tipo");
+        return "estrella".equals(propiedad);
     }
 
     private void borrarPantalla() {

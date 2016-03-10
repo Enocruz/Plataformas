@@ -13,6 +13,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -63,6 +64,7 @@ public class PantallaJuego implements Screen
     // Fin del juego, Gana o Pierde
     private Texture texturaGana;
     private Boton btnGana;
+    private Sound sonidoPierde;
 
     // Estados del juego
     private EstadosJuego estadoJuego;
@@ -158,6 +160,7 @@ public class PantallaJuego implements Screen
 
         // Efecto moneda
         sonidoEstrella = assetManager.get("coin.wav");
+        sonidoPierde = assetManager.get("mariodie.wav");
     }
 
     /*
@@ -167,9 +170,11 @@ public class PantallaJuego implements Screen
     @Override
     public void render(float delta) { // delta es el tiempo entre frames (Gdx.graphics.getDeltaTime())
 
-        // Actualizar objetos en la pantalla
-        moverPersonaje();
-        actualizarCamara(); // Mover la cámara para que siga al personaje
+        if (estadoJuego!=EstadosJuego.PERDIO) {
+            // Actualizar objetos en la pantalla
+            moverPersonaje();
+            actualizarCamara(); // Mover la cámara para que siga al personaje
+        }
 
         // Dibujar
         borrarPantalla();
@@ -237,7 +242,7 @@ public class PantallaJuego implements Screen
                 if (celda==null) {
                     // Celda vacía, entonces el personaje puede avanzar
                     mario.caer();
-                } else if ( !esEstrella(celda) ) {  // Las estrellas no lo detiene :)
+                }  else if ( !esEstrella(celda) ) {  // Las estrellas no lo detienen :)
                     // Dejarlo sobre la celda que lo detiene
                     mario.setPosicion(mario.getX(), (celdaY + 1) * TAM_CELDA);
                     mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
@@ -318,6 +323,15 @@ public class PantallaJuego implements Screen
                 capaPlataforma.setCell(celdaX,celdaY+1,null);
                 estrellas++;
                 sonidoEstrella.play();
+            } else if ( esHongo( capaPlataforma.getCell(celdaX,celdaY) ) ) {
+                sonidoPierde.play();
+                estadoJuego = EstadosJuego.PERDIO;
+                Timer.schedule(new Timer.Task() {
+                    @Override
+                    public void run() {
+                        plataforma.setScreen(new Menu(plataforma));
+                    }
+                }, 3);  // 3 segundos
             } else {
                 mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
             }
@@ -343,6 +357,15 @@ public class PantallaJuego implements Screen
         }
         Object propiedad = celda.getTile().getProperties().get("tipo");
         return "estrella".equals(propiedad);
+    }
+
+    // Verifica si esta casilla tiene un hongo (simplificar con las anteriores)
+    private boolean esHongo(TiledMapTileLayer.Cell celda) {
+        if (celda==null) {
+            return false;
+        }
+        Object propiedad = celda.getTile().getProperties().get("tipo");
+        return "hongo".equals(propiedad);
     }
 
     private void borrarPantalla() {

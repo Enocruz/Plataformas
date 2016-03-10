@@ -72,6 +72,7 @@ public class PantallaCargando implements Screen
         assetManager.load("ganaste.png", Texture.class);
         // Efecto al tomar la moneda
         assetManager.load("coin.wav", Sound.class);
+        assetManager.load("mariodie.wav", Sound.class);
     }
 
     @Override

@@ -58,7 +58,7 @@ public class PantallaJuego implements Screen
     // Estrellas recolectadas
     private int estrellas;
     private Texto texto;
-    private Sound sonidoMoneda;
+    private Sound sonidoEstrella;
 
     // Fin del juego, Gana o Pierde
     private Texture texturaGana;
@@ -157,7 +157,7 @@ public class PantallaJuego implements Screen
         btnGana.setAlfa(0.7f);
 
         // Efecto moneda
-        sonidoMoneda = assetManager.get("coin.wav");
+        sonidoEstrella = assetManager.get("coin.wav");
     }
 
     /*
@@ -312,12 +312,12 @@ public class PantallaJuego implements Screen
                 // Borrar esta estrella y contabilizar
                 capaPlataforma.setCell(celdaX,celdaY,null);
                 estrellas++;
-                sonidoMoneda.play();
+                sonidoEstrella.play();
             } else if ( esEstrella(capaPlataforma.getCell(celdaX,celdaY+1)) ) {
                 // Borrar esta estrella y contabilizar
                 capaPlataforma.setCell(celdaX,celdaY+1,null);
                 estrellas++;
-                sonidoMoneda.play();
+                sonidoEstrella.play();
             } else {
                 mario.setEstadoMovimiento(Personaje.EstadoMovimiento.QUIETO);
             }

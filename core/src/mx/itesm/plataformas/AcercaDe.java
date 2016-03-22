@@ -7,21 +7,20 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.ParticleEmitter;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
- * Pantalla principal del juego, muestra un mapa y el personaje
+ * Pantalla Acerca de, información de la app
  *
  * @author Roberto Martínez Román
  */
-public class Menu implements Screen
+public class AcercaDe implements Screen
 {
     // Referencia al objeto de tipo Game (tiene setScreen para cambiar de pantalla)
     private Plataforma plataforma;
@@ -34,15 +33,20 @@ public class Menu implements Screen
     private SpriteBatch batch;
 
     // Fondo
-    private Texture texturaMenu;
+    private Texture texturaAcercaDe;
 
     // Opciones
-    private Texture texturaPlay;
-    private Texture texturaAbout;
-    private Boton btnPlay;
-    private Boton btnAbout;
+    private Texture texturaRegresar;
+    private Boton btnRegresar;
 
-    public Menu(Plataforma plataforma) {
+    // SISTEMA DE PARTICULAS
+    private ParticleEffect efecto;
+    private int indiceEmisor;
+    private Array<ParticleEmitter> emisores;
+    private int cuentaParticulas;
+    private float fps;
+
+    public AcercaDe(Plataforma plataforma) {
         this.plataforma = plataforma;
     }
 
@@ -63,6 +67,15 @@ public class Menu implements Screen
         crearObjetos();
 
         Gdx.input.setInputProcessor(new ProcesadorEntrada());
+
+        // SISTEMA de PARTICULAS
+        efecto = new ParticleEffect();
+        efecto.load(Gdx.files.internal("prueba.p"),Gdx.files.internal("./"));
+        efecto.setPosition(Plataforma.ANCHO_CAMARA / 2, Plataforma.ALTO_CAMARA / 2);
+        emisores = new Array<ParticleEmitter>(efecto.getEmitters());
+        efecto.getEmitters().clear();
+        efecto.getEmitters().add(emisores.get(0));
+
     }
 
     // Carga los recursos a través del administrador de assets
@@ -70,9 +83,8 @@ public class Menu implements Screen
         // Cargar las texturas/mapas
         AssetManager assetManager = plataforma.getAssetManager();   // Referencia al assetManager
 
-        assetManager.load("fondo_A.jpg", Texture.class);    // Cargar imagen
-        assetManager.load("about.png", Texture.class);
-        assetManager.load("play.png", Texture.class);
+        assetManager.load("fondoAcercaDe.jpg", Texture.class);    // Cargar imagen
+        assetManager.load("regresar.png", Texture.class);
         // Texturas de los botones
 
         // Se bloquea hasta que cargue todos los recursos
@@ -82,16 +94,12 @@ public class Menu implements Screen
     private void crearObjetos() {
         AssetManager assetManager = plataforma.getAssetManager();   // Referencia al assetManager
         // Carga el mapa en memoria
-        texturaMenu = assetManager.get("fondo_A.jpg");
-        texturaPlay = assetManager.get("play.png");
-        texturaAbout = assetManager.get("about.png");
+        texturaAcercaDe = assetManager.get("fondoAcercaDe.jpg");
+        texturaRegresar = assetManager.get("regresar.png");
 
-        btnAbout = new Boton(texturaAbout);
-        btnAbout.setPosicion(Plataforma.ANCHO_CAMARA/4 - texturaAbout.getWidth()/2,
-                Plataforma.ALTO_CAMARA/2 - texturaAbout.getHeight()/2);
-        btnPlay = new Boton(texturaPlay);
-        btnPlay.setPosicion(3*Plataforma.ANCHO_CAMARA/4 - texturaPlay.getWidth()/2,
-                Plataforma.ALTO_CAMARA/2 - texturaPlay.getHeight()/2);
+        btnRegresar = new Boton(texturaRegresar);
+        //btnRegresar.setPosicion(3 * Plataforma.ANCHO_CAMARA / 4 - texturaRegresar.getWidth() / 2,
+                //Plataforma.ALTO_CAMARA / 2 - texturaRegresar.getHeight() / 2);
     }
 
     /*
@@ -109,9 +117,9 @@ public class Menu implements Screen
         // Entre begin-end dibujamos nuestros objetos en pantalla
         batch.begin();
 
-        batch.draw(texturaMenu, 0, 0);
-        btnAbout.render(batch);
-        btnPlay.render(batch);
+        batch.draw(texturaAcercaDe, 0, 0);
+        btnRegresar.render(batch);
+        efecto.draw(batch,delta);
         batch.end();
     }
 
@@ -145,9 +153,9 @@ public class Menu implements Screen
     public void dispose() {
         // Los assets se liberan a través del assetManager
         AssetManager assetManager = plataforma.getAssetManager();
-        assetManager.unload("fondo_A.jpg");
-        assetManager.unload("play.png");
-        assetManager.unload("about.png");
+        assetManager.unload("fondoAcercaDe.jpg");
+        assetManager.unload("regresar.png");
+        efecto.dispose();
     }
 
     /*
@@ -178,10 +186,8 @@ public class Menu implements Screen
         public boolean touchUp(int screenX, int screenY, int pointer, int button) {
             transformarCoordenadas(screenX, screenY);
 
-            if (btnPlay.contiene(x,y)){
-                plataforma.setScreen(new PantallaCargando(plataforma));
-            } else if (btnAbout.contiene(x,y)){
-                plataforma.setScreen(new AcercaDe(plataforma));
+            if (btnRegresar.contiene(x,y)){
+                plataforma.setScreen(new Menu(plataforma));
             }
             return true;    // Indica que ya procesó el evento
         }

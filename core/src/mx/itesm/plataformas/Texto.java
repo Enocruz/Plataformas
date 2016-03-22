@@ -15,8 +15,6 @@ public class Texto
 
     public Texto() {
         font = new BitmapFont(Gdx.files.internal("Mario.fnt"));
-        //font.setColor(Color.RED);
-        //font.getData().scale(2);
     }
 
     public void mostrarMensaje(SpriteBatch batch, String mensaje, float x, float y) {

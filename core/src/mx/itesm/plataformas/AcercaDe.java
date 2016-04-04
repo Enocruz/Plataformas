@@ -46,6 +46,9 @@ public class AcercaDe implements Screen
     private int cuentaParticulas;
     private float fps;
 
+    private ParticleEffect explosion;
+
+
     public AcercaDe(Plataforma plataforma) {
         this.plataforma = plataforma;
     }
@@ -70,12 +73,18 @@ public class AcercaDe implements Screen
 
         // SISTEMA de PARTICULAS
         efecto = new ParticleEffect();
-        efecto.load(Gdx.files.internal("prueba.p"),Gdx.files.internal("./"));
+        efecto.load(Gdx.files.internal("prueba.p"), Gdx.files.internal("./"));
         efecto.setPosition(Plataforma.ANCHO_CAMARA / 2, Plataforma.ALTO_CAMARA / 2);
         emisores = new Array<ParticleEmitter>(efecto.getEmitters());
         efecto.getEmitters().clear();
         efecto.getEmitters().add(emisores.get(0));
 
+        // Explosion
+        explosion = new ParticleEffect();
+        explosion.load(Gdx.files.internal("explosion.p"), Gdx.files.internal("./"));
+        explosion.scaleEffect(1);
+        explosion.setPosition(Plataforma.ANCHO_CAMARA / 2, Plataforma.ALTO_CAMARA / 5);
+        explosion.reset();
     }
 
     // Carga los recursos a través del administrador de assets
@@ -120,6 +129,9 @@ public class AcercaDe implements Screen
         batch.draw(texturaAcercaDe, 0, 0);
         btnRegresar.render(batch);
         efecto.draw(batch,delta);
+
+        explosion.draw(batch, Gdx.graphics.getDeltaTime());
+
         batch.end();
     }
 
@@ -176,6 +188,8 @@ public class AcercaDe implements Screen
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
             transformarCoordenadas(screenX, screenY);
 
+            explosion.setPosition(x,y);
+            explosion.reset();
             return true;    // Indica que ya procesó el evento
         }
 

@@ -168,6 +168,7 @@ public class AcercaDe implements Screen
         assetManager.unload("fondoAcercaDe.jpg");
         assetManager.unload("regresar.png");
         efecto.dispose();
+        explosion.dispose();
     }
 
     /*

@@ -61,6 +61,7 @@ public class PantallaCargando implements Screen
 
     // Carga los recursos a través del administrador de assets (siguiente pantalla)
     private void cargarRecursos() {
+        Gdx.app.log("cargarRecursos","Iniciando...");
         // Carga los recursos de la siguiente pantalla (PantallaJuego)
         assetManager.load("Mapa.tmx", TiledMap.class);  // Cargar info del mapa
         assetManager.load("marioSprite.png", Texture.class);    // Cargar imagen
@@ -73,6 +74,7 @@ public class PantallaCargando implements Screen
         // Efecto al tomar la moneda
         assetManager.load("coin.wav", Sound.class);
         assetManager.load("mariodie.wav", Sound.class);
+        Gdx.app.log("cargarRecursos", "Terminando...");
     }
 
     @Override
